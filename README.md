@@ -78,5 +78,6 @@ Version          | Name
 10.0.16299.15    | Windows 10 1709
 10.0.17134.1     | Windows 10 1803
 10.0.17763.1     | Windows 10 1809
+10.0.18362.1     | Windows 10 1903
 
 &ast; Header files are not present because there are no symbol files on the Microsoft symbol server.
