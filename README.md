@@ -79,5 +79,7 @@ Version          | Name
 10.0.17134.1     | Windows 10 1803
 10.0.17763.1     | Windows 10 1809
 10.0.18362.1     | Windows 10 1903
+10.0.18362.418   | Windows 10 1909**
 
-&ast; Header files are not present because there are no symbol files on the Microsoft symbol server.
+&ast; Header files are not present because there are no symbol files on the Microsoft symbol server.  
+&ast;&ast; Windows 10, versions 1903 and 1909 share a common core operating system and an identical set of system files.
