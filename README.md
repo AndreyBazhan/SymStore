@@ -57,10 +57,10 @@ Version          | Name
 ---------------- |------------------------
 5.0.2195.7376    | Windows 2000 SP4
 5.1.2600.0       | Windows XP
-5.1.2600.1106    | Windows XP SP1*
+5.1.2600.1106    | Windows XP SP1<sup>1</sup>
 5.1.2600.2180    | Windows XP SP2
 5.1.2600.6419    | Windows XP SP3
-5.2.3790.0       | Windows Server 2003*
+5.2.3790.0       | Windows Server 2003<sup>1</sup>
 5.2.3790.1830    | Windows Server 2003 SP1
 5.2.3790.3959    | Windows Server 2003 SP2
 6.0.6000.16386   | Windows Vista
@@ -79,7 +79,9 @@ Version          | Name
 10.0.17134.1     | Windows 10 1803
 10.0.17763.1     | Windows 10 1809
 10.0.18362.1     | Windows 10 1903
-10.0.18362.418   | Windows 10 1909**
+10.0.18362.418   | Windows 10 1909<sup>2</sup>
+10.0.19041.264   | Windows 10 2004<sup>3</sup>
 
-&ast; Header files are not present because there are no symbol files on the Microsoft symbol server.  
-&ast;&ast; Windows 10, versions 1903 and 1909 share a common core operating system and an identical set of system files.
+<sup>1</sup> Header files are not present because there are no symbol files on the Microsoft symbol server.  
+<sup>2</sup> Windows 10, versions 1903 and 1909 share a common core operating system and an identical set of system files.  
+<sup>3</sup> 64-bit version of ntoskrnl.exe contains implementation of hal.dll.
