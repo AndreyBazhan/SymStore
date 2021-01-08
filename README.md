@@ -11,14 +11,16 @@ This repository contains header files with structures, unions, enums, global var
 1. Download [Symbols Explorer](http://www.andreybazhan.com/symexp.html).
 2. Copy SymExp.exe to a Debugging Tools for Windows folder. For example: C:\Program Files (x86)\Windows Kits\10\Debuggers\x64.
 
-### Symbols Scripts
+### Tools
 
-1. Copy Symbols folder from the Tools folder to "C:\Users\\**{UserName}**\Documents\WindowsPowerShell\Modules".
+1. Copy SymStore folder from the Tools folder to "C:\Users\\**%UserName%**\Documents\WindowsPowerShell\Modules".
+2. Copy Diff.bat from the Tools folder to "C:\Users\\**%UserName%**\AppData\Roaming\Microsoft\Windows\SendTo".
+3. Install Visual Studio Editor.
 
-### Diff
-
-1. Install Visual Studio Editor.
-2. Copy Diff.bat from the Tools folder to "C:\Users\\**{UserName}**\AppData\Roaming\Microsoft\Windows\SendTo".
+```powershell
+Copy-Item -Path SymStore -Destination "C:\Users\$env:UserName\Documents\WindowsPowerShell\Modules" -Recurse
+Copy-Item -Path Diff.bat -Destination "C:\Users\$env:UserName\AppData\Roaming\Microsoft\Windows\SendTo"
+```
 
 ## How to compare header files
 
@@ -37,18 +39,57 @@ SymChk from Debugging Tools for Windows is not able to download those image file
 
 ```powershell
 Add-ImageFile -FilePath "C:\SymStore\Symbols\ntoskrnl.exe\a45bf00aa6f000\ntoskrnl.exe" -Destination "C:\SymStore\Binaries"
-Add-ImageFiles -Path "C:\SymStore\Symbols" -Destination "C:\SymStore\Binaries"
-Add-ImageFiles -Path "C:\SymStore\Symbols" -Destination "C:\SymStore\Binaries" -Include *.exe
-Add-ImageFiles -Path "C:\SymStore\Symbols" -Destination "C:\SymStore\Binaries" -Include hal*.dll
+Add-ImageFiles -Path "C:\SymStore\Symbols" -Destination "C:\SymStore\Binaries" -Recurse
+Add-ImageFiles -Path "C:\SymStore\Symbols" -Destination "C:\SymStore\Binaries" -Include *.exe -Recurse
+Add-ImageFiles -Path "C:\SymStore\Symbols" -Destination "C:\SymStore\Binaries" -Include hal*.dll -Recurse
 ```
 
 ## How to get header files
 
 ```powershell
 New-HeaderFile -FilePath "C:\SymStore\Binaries\ntoskrnl.exe\10.0.17763.316\x64\ntoskrnl.exe" -Destination "C:\SymStore\Include\ntoskrnl.exe"
-New-HeaderFiles -Path "C:\SymStore\Binaries" -Destination "C:\SymStore\Include\ntoskrnl.exe" -Include nt*.exe
-New-HeaderFiles -Path "C:\SymStore\Binaries" -Destination "C:\SymStore\Include\ntdll.dll" -Include ntdll.dll
-New-HeaderFiles -Path "C:\SymStore\Binaries" -Destination "C:\SymStore\Include\hal.dll" -Include hal*.dll
+New-HeaderFiles -Path "C:\SymStore\Binaries" -Destination "C:\SymStore\Include\ntoskrnl.exe" -Include nt*.exe -Recurse
+New-HeaderFiles -Path "C:\SymStore\Binaries" -Destination "C:\SymStore\Include\ntdll.dll" -Include ntdll.dll -Recurse
+New-HeaderFiles -Path "C:\SymStore\Binaries" -Destination "C:\SymStore\Include\hal.dll" -Include hal*.dll -Recurse
+```
+
+## How to update SymStore
+
+```powershell
+$StorePath = "C:\SymStore"
+$Files = "C:\ImageFiles\19042.508.200927-1902.20h2_release_svc_refresh_CLIENTENTERPRISEEVAL_OEMRET_x64FRE_en-us.iso",
+         "C:\ImageFiles\19042.508.200927-1902.20h2_release_svc_refresh_CLIENTENTERPRISEEVAL_OEMRET_x86FRE_en-us.iso"
+$RelativePath = "Windows\System32"
+$Include = "ntoskrnl.exe", "ntdll.dll"
+
+$Files | % { Update-SymStore -StorePath $StorePath -ImagePath $_ -RelativePath $RelativePath -Include $Include }
+```
+
+```powershell
+$StorePath = "C:\SymStore"
+$Files =
+@{
+ImagePath = "C:\ImageFiles\19042.508.200927-1902.20h2_release_svc_refresh_CLIENTENTERPRISEEVAL_OEMRET_x64FRE_en-us.iso"
+PackagePath = "C:\Packages\windows10.0-kb4586853-x64_9c181d397b4b5d320af7e6f385ebc4bba693a95c.msu",
+              "C:\Packages\windows10.0-kb4592438-x64_b6914251264f8f973c3f82f99b894935f33c38e6.msu"
+},
+@{
+ImagePath = "C:\ImageFiles\19042.508.200927-1902.20h2_release_svc_refresh_CLIENTENTERPRISEEVAL_OEMRET_x86FRE_en-us.iso"
+PackagePath = "C:\Packages\windows10.0-kb4586853-x86_0468c67fa7cdd1262da75bd97a9f8daac3a4f7c2.msu",
+              "C:\Packages\windows10.0-kb4592438-x86_95758bd6e2c3a4a98a19efaa4056213531f84f5c.msu"
+}
+$RelativePath = "Windows\System32"
+$Include = "ntoskrnl.exe", "ntdll.dll"
+
+$Files | % { Update-SymStore -StorePath $StorePath -ImagePath $_.ImagePath -PackagePath $_.PackagePath -RelativePath $RelativePath -Include $Include }
+```
+
+## How to update manifest file
+
+```powershell
+$SymStore = "C:\SymStore"
+Remove-Item -Path "$SymStore\Manifest.txt"
+symchk.exe "$SymStore\Binaries" /r /om "$SymStore\Manifest.txt" /ob /od /os
 ```
 
 ## Windows Version Information
@@ -81,6 +122,7 @@ Version          | Name
 10.0.18362.1     | Windows 10 1903
 10.0.18362.418   | Windows 10 1909<sup>2</sup>
 10.0.19041.264   | Windows 10 2004<sup>3</sup>
+10.0.19041.508   | Windows 10 20H2
 
 <sup>1</sup> Header files are not present because there are no symbol files on the Microsoft symbol server.  
 <sup>2</sup> Windows 10, versions 1903 and 1909 share a common core operating system and an identical set of system files.  
