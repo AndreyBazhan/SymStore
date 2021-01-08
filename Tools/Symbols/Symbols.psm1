@@ -109,7 +109,7 @@ Function Add-ImageFile(
                 $Null = New-Item -Path $Destination -ItemType Directory
             }
 
-            Write-Output "Copying $FilePath to $Destination"
+            Write-Output "Copying $FilePath to $Destination\$FileName"
 
             Copy-Item -Path $FilePath -Destination $Destination
         }
@@ -125,10 +125,16 @@ Function Add-ImageFile(
 Function Add-ImageFiles(
     [Parameter(Mandatory = $True)] [String] $Path,
     [Parameter(Mandatory = $True)] [String] $Destination,
-    [Parameter(Mandatory = $False)] [String[]] $Include = @("*.exe", "*.dll", "*.sys")
+    [Parameter(Mandatory = $False)] [String[]] $Include = @("*.exe", "*.dll", "*.sys"),
+    [Parameter(Mandatory = $False)] [Switch] $Recurse
     )
 {
-    $Files = Get-ChildItem -Path $Path -Include $Include -File -Recurse
+    if (!$Recurse) {
+
+        $Path = [System.IO.Path]::Combine($Path, "*")
+    }
+
+    $Files = Get-ChildItem -Path $Path -Include $Include -File -Recurse:$Recurse
 
     foreach ($File in $Files) {
 
@@ -171,16 +177,16 @@ Function New-HeaderFile(
             $FileName = Split-Path -Path $FilePath -Leaf
             $FileName = "$FileName-$FileVersion-$Architecture.h"
 
-            $OutFile = [System.IO.Path]::Combine($Destination, $FileName)
+            $HeaderFile = [System.IO.Path]::Combine($Destination, $FileName)
 
             if ((Test-Path $Destination) -eq $False) {
 
                 $Null = New-Item -Path $Destination -ItemType Directory
             }
 
-            Write-Output $FileName
+            Write-Output "Creating $HeaderFile from $FilePath"
 
-            SymExp.exe $FilePath | Out-File -Encoding ASCII $OutFile
+            SymExp.exe $FilePath | Out-File -Encoding ASCII $HeaderFile
         }
         else {
 
@@ -194,10 +200,16 @@ Function New-HeaderFile(
 Function New-HeaderFiles(
     [Parameter(Mandatory = $True)] [String] $Path,
     [Parameter(Mandatory = $True)] [String] $Destination,
-    [Parameter(Mandatory = $False)] [String[]] $Include = @("*.exe", "*.dll", "*.sys")
+    [Parameter(Mandatory = $False)] [String[]] $Include = @("*.exe", "*.dll", "*.sys"),
+    [Parameter(Mandatory = $False)] [Switch] $Recurse
     )
 {
-    $Files = Get-ChildItem -Path $Path -Include $Include -File -Recurse
+    if (!$Recurse) {
+
+        $Path = [System.IO.Path]::Combine($Path, "*")
+    }
+
+    $Files = Get-ChildItem -Path $Path -Include $Include -File -Recurse:$Recurse
 
     foreach ($File in $Files) {
 
