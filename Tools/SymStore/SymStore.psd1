@@ -1,5 +1,5 @@
 @{
-    RootModule = 'Symbols.psm1'
+    RootModule = 'SymStore.psm1'
     Author = 'Andrey Bazhan'
     CompanyName = 'www.andreybazhan.com'
     Copyright = '(C) 2019 Andrey Bazhan'
