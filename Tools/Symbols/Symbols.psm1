@@ -13,7 +13,7 @@
 
         $Directory = [System.IO.Path]::Combine($Destination, $Name, $Id)
 
-        if ((Test-Path $Directory) -eq $False) {
+        if (!(Test-Path $Directory)) {
 
             $Null = New-Item -Path $Directory -ItemType Directory
         }
@@ -21,7 +21,7 @@
         $Uri = [String]::Format("https://msdl.microsoft.com/download/symbols/{0}/{1}/{2}", $Name, $Id, $Name)
         $OutFile = [System.IO.Path]::Combine($Destination, $Name, $Id, $Name)
 
-        if ((Test-Path $OutFile) -eq $False) {
+        if (!(Test-Path $OutFile)) {
 
             Invoke-WebRequest -Uri $Uri -OutFile $OutFile
         }
@@ -34,7 +34,7 @@
 
             $Directory = [System.IO.Path]::Combine($Destination, $Name2, $Id2)
 
-            if ((Test-Path $Directory) -eq $False) {
+            if (!(Test-Path $Directory)) {
 
                 $Null = New-Item -Path $Directory -ItemType Directory
             }
@@ -44,7 +44,7 @@
 
             try {
 
-                if ((Test-Path $OutFile) -eq $False) {
+                if (!(Test-Path $OutFile)) {
 
                     Invoke-WebRequest -Uri $Uri -OutFile $OutFile
                 }
@@ -104,7 +104,7 @@ Function Add-ImageFile(
 
             $Destination = [System.IO.Path]::Combine($Destination, $FileName, $FileVersion, $Architecture)
 
-            if ((Test-Path $Destination) -eq $False) {
+            if (!(Test-Path $Destination)) {
 
                 $Null = New-Item -Path $Destination -ItemType Directory
             }
@@ -179,7 +179,7 @@ Function New-HeaderFile(
 
             $HeaderFile = [System.IO.Path]::Combine($Destination, $FileName)
 
-            if ((Test-Path $Destination) -eq $False) {
+            if (!(Test-Path $Destination)) {
 
                 $Null = New-Item -Path $Destination -ItemType Directory
             }
@@ -214,5 +214,104 @@ Function New-HeaderFiles(
     foreach ($File in $Files) {
 
         New-HeaderFile -FilePath $File -Destination $Destination
+    }
+}
+
+Function Update-SymStore(
+    [Parameter(Mandatory = $True)] [String] $StorePath,
+    [Parameter(Mandatory = $True)] [String] $ImagePath,
+    [Parameter(Mandatory = $False)] [String[]] $PackagePath,
+    [Parameter(Mandatory = $False)] [String[]] $RelativePath,
+    [Parameter(Mandatory = $False)] [String[]] $Include = @("*.exe", "*.dll", "*.sys"),
+    [Parameter(Mandatory = $False)] [UInt32] $Index = 1,
+    [Parameter(Mandatory = $False)] [Switch] $Recurse
+    )
+{
+    if (!(Test-Path $StorePath)) {
+
+        throw "Store directory '$StorePath' does not exist."
+    }
+
+    if (!(Test-Path $ImagePath)) {
+
+        throw "Image file '$ImagePath' does not exist."
+    }
+
+    foreach ($Path in $PackagePath) {
+
+        if (!(Test-Path $Path)) {
+
+            throw "Package file '$Path' does not exist."
+        }
+    }
+
+    if (!$Recurse) {
+
+        for ($i = 0; $i -lt $RelativePath.Length; $i++) {
+
+            $RelativePath[$i] = [System.IO.Path]::Combine($RelativePath[$i], "*")
+        }
+    }
+
+    try {
+
+        $MountDirectory = New-Item -Path "$env:SystemDrive\$(New-Guid)" -ItemType Directory -ErrorAction Stop
+
+        $DiskImage = Mount-DiskImage -ImagePath $ImagePath -PassThru -ErrorAction Stop
+
+        $DriveLetter = (Get-Volume -DiskImage $DiskImage).DriveLetter
+
+        $WindowsImage = Mount-WindowsImage -ImagePath "${DriveLetter}:\sources\install.wim" -Path $MountDirectory -ReadOnly -Index:$Index -ErrorAction Stop
+
+        $Location = Push-Location $MountDirectory -PassThru -ErrorAction Stop
+
+        $Files = Get-ChildItem -Path $RelativePath -Include $Include -File -Recurse:$Recurse
+
+        if ($Files) {
+
+            if ($PackagePath) {
+
+                foreach ($Path in $PackagePath) {
+
+                    Add-WindowsPackage -Path $MountDirectory -PackagePath $Path -ErrorAction Stop
+
+                    foreach ($File in $Files) {
+
+                        Add-ImageFile -FilePath $File.FullName -Destination "$StorePath\Binaries"
+                        New-HeaderFile -FilePath $File.FullName -Destination "$StorePath\Include\$($File.Name)"
+                    }
+                }
+            }
+            else {
+
+                foreach ($File in $Files) {
+
+                    Add-ImageFile -FilePath $File.FullName -Destination "$StorePath\Binaries"
+                    New-HeaderFile -FilePath $File.FullName -Destination "$StorePath\Include\$($File.Name)"
+                }
+            }
+        }
+    }
+    finally {
+
+        if ($Location) {
+
+            Pop-Location
+        }
+
+        if ($WindowsImage) {
+
+            Dismount-WindowsImage -Path $MountDirectory -Discard
+        }
+
+        if ($DiskImage) {
+
+            Dismount-DiskImage -ImagePath $ImagePath
+        }
+
+        if ($MountDirectory) {
+
+            Remove-Item -Path $MountDirectory
+        }
     }
 }
