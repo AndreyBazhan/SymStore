@@ -124,6 +124,7 @@ Version          | Name
 10.0.19041.264   | Windows 10 2004<sup>3</sup>
 10.0.19041.508   | Windows 10 20H2
 10.0.19041.928   | Windows 10 21H1
+10.0.22000.194   | Windows 11
 
 <sup>1</sup> Header files are not present because there are no symbol files on the Microsoft symbol server.  
 <sup>2</sup> Windows 10, versions 1903 and 1909 share a common core operating system and an identical set of system files.  
